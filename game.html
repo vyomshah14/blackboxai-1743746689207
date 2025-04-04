@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Space Shooter Game</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        body {
+            margin: 0;
+            overflow: hidden;
+            background-color: #000;
+        }
+        canvas {
+            display: block;
+        }
+        .game-ui {
+            position: absolute;
+            top: 10px;
+            width: 100%;
+            display: flex;
+            justify-content: space-between;
+            padding: 0 20px;
+            color: white;
+            font-family: Arial, sans-serif;
+            pointer-events: none;
+        }
+        .btn {
+            pointer-events: auto;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+    <div class="game-ui">
+        <div class="text-xl font-bold">
+            Score: <span id="score">0</span>
+        </div>
+        <button id="pauseBtn" class="btn bg-gray-800 hover:bg-gray-700 text-white px-4 py-2 rounded">
+            <i class="fas fa-pause"></i>
+        </button>
+    </div>
+    <canvas id="gameCanvas"></canvas>
+
+    <!-- Game Over Modal -->
+    <div id="gameOverModal" class="fixed inset-0 bg-black bg-opacity-70 hidden items-center justify-center z-50">
+        <div class="bg-gray-800 rounded-lg p-8 text-center max-w-md w-full">
+            <h2 class="text-3xl font-bold mb-4 text-red-500">GAME OVER</h2>
+            <p class="text-xl mb-2">Your Score: <span id="finalScore" class="font-bold">0</span></p>
+            <div class="space-y-3 mt-6">
+                <button onclick="window.location.href='game.html'" 
+                        class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-6 rounded-full w-full">
+                    <i class="fas fa-redo mr-2"></i>Play Again
+                </button>
+                <button onclick="window.location.href='leaderboard.html?score=' + document.getElementById('finalScore').textContent" 
+                        class="bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-6 rounded-full w-full">
+                    <i class="fas fa-trophy mr-2"></i>Save to Leaderboard
+                </button>
+                <button onclick="window.location.href='index.html'" 
+                        class="bg-gray-600 hover:bg-gray-700 text-white font-bold py-3 px-6 rounded-full w-full">
+                    <i class="fas fa-home mr-2"></i>Main Menu
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Game variables
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+        const scoreElement = document.getElementById('score');
+        const finalScoreElement = document.getElementById('finalScore');
+        const gameOverModal = document.getElementById('gameOverModal');
+        const pauseBtn = document.getElementById('pauseBtn');
+
+        // Set canvas size
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+
+        // Game state
+        let score = 0;
+        let gameRunning = true;
+        let gamePaused = false;
+
+        // Player
+        const player = {
+            x: canvas.width / 2,
+            y: canvas.height - 100,
+            width: 50,
+            height: 50,
+            speed: 8,
+            color: '#3498db'
+        };
+
+        // Bullets
+        const bullets = [];
+        const bulletSpeed = 10;
+        const bulletSize = 5;
+
+        // Asteroids
+        const asteroids = [];
+        const asteroidColors = ['#e74c3c', '#f39c12', '#9b59b6', '#1abc9c'];
+        let asteroidSpawnRate = 60;
+        let asteroidSpawnCounter = 0;
+
+        // Key states
+        const keys = {
+            ArrowUp: false,
+            ArrowDown: false,
+            ArrowLeft: false,
+            ArrowRight: false,
+            ' ': false
+        };
+
+        // Event listeners
+        window.addEventListener('keydown', (e) => {
+            if (keys.hasOwnProperty(e.key)) {
+                keys[e.key] = true;
+            }
+        });
+
+        window.addEventListener('keyup', (e) => {
+            if (keys.hasOwnProperty(e.key)) {
+                keys[e.key] = false;
+            }
+        });
+
+        pauseBtn.addEventListener('click', togglePause);
+
+        // Game functions
+        function togglePause() {
+            gamePaused = !gamePaused;
+            pauseBtn.innerHTML = gamePaused ? '<i class="fas fa-play"></i>' : '<i class="fas fa-pause"></i>';
+        }
+
+        function spawnAsteroid() {
+            const size = Math.random() * 30 + 20;
+            asteroids.push({
+                x: Math.random() * (canvas.width - size),
+                y: -size,
+                width: size,
+                height: size,
+                speed: Math.random() * 3 + 1,
+                color: asteroidColors[Math.floor(Math.random() * asteroidColors.length)]
+            });
+        }
+
+        function update() {
+            if (gamePaused) return;
+
+            // Clear canvas
+            ctx.fillStyle = 'black';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            // Update player position
+            if (keys.ArrowUp && player.y > 0) player.y -= player.speed;
+            if (keys.ArrowDown && player.y < canvas.height - player.height) player.y += player.speed;
+            if (keys.ArrowLeft && player.x > 0) player.x -= player.speed;
+            if (keys.ArrowRight && player.x < canvas.width - player.width) player.x += player.speed;
+
+            // Fire bullets
+            if (keys[' '] && gameRunning) {
+                if (Date.now() - (bullets[bullets.length - 1]?.lastFired || 0) > 300) {
+                    bullets.push({
+                        x: player.x + player.width / 2 - bulletSize / 2,
+                        y: player.y,
+                        width: bulletSize,
+                        height: bulletSize * 2,
+                        lastFired: Date.now()
+                    });
+                }
+            }
+
+            // Update bullets
+            for (let i = bullets.length - 1; i >= 0; i--) {
+                bullets[i].y -= bulletSpeed;
+                ctx.fillStyle = '#f1c40f';
+                ctx.fillRect(bullets[i].x, bullets[i].y, bullets[i].width, bullets[i].height);
+
+                // Remove bullets that are off screen
+                if (bullets[i].y < 0) {
+                    bullets.splice(i, 1);
+                }
+            }
+
+            // Spawn asteroids
+            asteroidSpawnCounter++;
+            if (asteroidSpawnCounter >= asteroidSpawnRate) {
+                spawnAsteroid();
+                asteroidSpawnCounter = 0;
+                // Increase difficulty by increasing spawn rate
+                asteroidSpawnRate = Math.max(20, asteroidSpawnRate - 0.5);
+            }
+
+            // Update asteroids
+            for (let i = asteroids.length - 1; i >= 0; i--) {
+                asteroids[i].y += asteroids[i].speed;
+                ctx.fillStyle = asteroids[i].color;
+                ctx.beginPath();
+                ctx.arc(
+                    asteroids[i].x + asteroids[i].width / 2,
+                    asteroids[i].y + asteroids[i].height / 2,
+                    asteroids[i].width / 2,
+                    0,
+                    Math.PI * 2
+                );
+                ctx.fill();
+
+                // Check collision with player
+                if (
+                    player.x < asteroids[i].x + asteroids[i].width &&
+                    player.x + player.width > asteroids[i].x &&
+                    player.y < asteroids[i].y + asteroids[i].height &&
+                    player.y + player.height > asteroids[i].y
+                ) {
+                    gameOver();
+                }
+
+                // Check collision with bullets
+                for (let j = bullets.length - 1; j >= 0; j--) {
+                    if (
+                        bullets[j].x < asteroids[i].x + asteroids[i].width &&
+                        bullets[j].x + bullets[j].width > asteroids[i].x &&
+                        bullets[j].y < asteroids[i].y + asteroids[i].height &&
+                        bullets[j].y + bullets[j].height > asteroids[i].y
+                    ) {
+                        // Remove bullet and asteroid
+                        bullets.splice(j, 1);
+                        asteroids.splice(i, 1);
+                        score += 10;
+                        scoreElement.textContent = score;
+                        break;
+                    }
+                }
+
+                // Remove asteroids that are off screen
+                if (asteroids[i].y > canvas.height) {
+                    asteroids.splice(i, 1);
+                }
+            }
+
+            // Draw player
+            ctx.fillStyle = player.color;
+            ctx.beginPath();
+            ctx.moveTo(player.x + player.width / 2, player.y);
+            ctx.lineTo(player.x + player.width, player.y + player.height);
+            ctx.lineTo(player.x, player.y + player.height);
+            ctx.closePath();
+            ctx.fill();
+
+            if (gameRunning) {
+                requestAnimationFrame(update);
+            }
+        }
+
+        function gameOver() {
+            gameRunning = false;
+            finalScoreElement.textContent = score;
+            gameOverModal.classList.remove('hidden');
+            gameOverModal.classList.add('flex');
+        }
+
+        // Start game
+        update();
+
+        // Handle window resize
+        window.addEventListener('resize', () => {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+            player.x = canvas.width / 2 - player.width / 2;
+            player.y = canvas.height - 100;
+        });
+    </script>
+</body>
+</html>
