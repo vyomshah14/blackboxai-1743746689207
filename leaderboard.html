@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Leaderboard - Space Shooter</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        body {
+            background-image: url('https://images.pexels.com/photos/998641/pexels-photo-998641.jpeg');
+            background-size: cover;
+            background-position: center;
+            background-attachment: fixed;
+        }
+        .leaderboard-card {
+            backdrop-filter: blur(10px);
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col items-center py-12">
+    <div class="leaderboard-card bg-black/50 rounded-xl p-8 w-full max-w-2xl">
+        <h1 class="text-4xl font-bold text-center mb-8 text-white">
+            <i class="fas fa-trophy text-yellow-400 mr-2"></i>Leaderboard
+        </h1>
+        
+        <div id="nameInputContainer" class="mb-6 hidden">
+            <div class="flex items-center">
+                <input type="text" id="playerName" placeholder="Enter your name" 
+                       class="flex-1 px-4 py-2 rounded-l-lg focus:outline-none">
+                <button id="saveScoreBtn" class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-r-lg">
+                    Save
+                </button>
+            </div>
+        </div>
+
+        <div class="overflow-x-auto">
+            <table class="w-full text-white">
+                <thead>
+                    <tr class="border-b border-gray-600">
+                        <th class="px-4 py-2 text-left">Rank</th>
+                        <th class="px-4 py-2 text-left">Name</th>
+                        <th class="px-4 py-2 text-right">Score</th>
+                    </tr>
+                </thead>
+                <tbody id="leaderboardBody">
+                    <!-- Scores will be inserted here -->
+                </tbody>
+            </table>
+        </div>
+
+        <div class="mt-6 flex justify-between">
+            <button onclick="window.location.href='index.html'" 
+                    class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-6 rounded-full">
+                <i class="fas fa-home mr-2"></i>Main Menu
+            </button>
+            <button id="clearScoresBtn" 
+                    class="bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-6 rounded-full">
+                <i class="fas fa-trash-alt mr-2"></i>Clear Scores
+            </button>
+        </div>
+    </div>
+
+    <script>
+        // Get URL parameters
+        const urlParams = new URLSearchParams(window.location.search);
+        const scoreToSave = urlParams.get('score');
+
+        // DOM elements
+        const nameInputContainer = document.getElementById('nameInputContainer');
+        const playerNameInput = document.getElementById('playerName');
+        const saveScoreBtn = document.getElementById('saveScoreBtn');
+        const leaderboardBody = document.getElementById('leaderboardBody');
+        const clearScoresBtn = document.getElementById('clearScoresBtn');
+
+        // Show name input if there's a score to save
+        if (scoreToSave) {
+            nameInputContainer.classList.remove('hidden');
+        }
+
+        // Load and display leaderboard
+        function loadLeaderboard() {
+            const scores = JSON.parse(localStorage.getItem('spaceShooterScores')) || [];
+            
+            // Sort by score (descending)
+            scores.sort((a, b) => b.score - a.score);
+            
+            // Display top 10
+            leaderboardBody.innerHTML = '';
+            scores.slice(0, 10).forEach((entry, index) => {
+                const row = document.createElement('tr');
+                row.className = 'border-b border-gray-700 hover:bg-gray-700/50';
+                row.innerHTML = `
+                    <td class="px-4 py-2">${index + 1}</td>
+                    <td class="px-4 py-2">${entry.name}</td>
+                    <td class="px-4 py-2 text-right">${entry.score}</td>
+                `;
+                leaderboardBody.appendChild(row);
+            });
+        }
+
+        // Save score
+        saveScoreBtn.addEventListener('click', () => {
+            const name = playerNameInput.value.trim();
+            if (name && scoreToSave) {
+                const scores = JSON.parse(localStorage.getItem('spaceShooterScores')) || [];
+                scores.push({
+                    name: name,
+                    score: parseInt(scoreToSave)
+                });
+                localStorage.setItem('spaceShooterScores', JSON.stringify(scores));
+                nameInputContainer.classList.add('hidden');
+                loadLeaderboard();
+            }
+        });
+
+        // Clear scores
+        clearScoresBtn.addEventListener('click', () => {
+            if (confirm('Are you sure you want to clear all scores?')) {
+                localStorage.removeItem('spaceShooterScores');
+                loadLeaderboard();
+            }
+        });
+
+        // Initialize
+        loadLeaderboard();
+    </script>
+</body>
+</html>
