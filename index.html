@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Space Shooter</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        body {
+            background-image: url('https://images.pexels.com/photos/110854/pexels-photo-110854.jpeg');
+            background-size: cover;
+            background-position: center;
+            background-attachment: fixed;
+        }
+        .btn-hover:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
+        }
+        .btn-active:active {
+            transform: translateY(-1px);
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col items-center justify-center text-white">
+    <div class="backdrop-blur-sm bg-black/50 p-12 rounded-xl text-center">
+        <h1 class="text-6xl font-bold mb-6 tracking-wider">SPACE SHOOTER</h1>
+        <div class="space-y-4">
+            <button onclick="window.location.href='game.html'" 
+                    class="btn-hover btn-active bg-blue-600 hover:bg-blue-700 text-white font-bold py-4 px-8 rounded-full text-xl transition-all duration-300">
+                <i class="fas fa-rocket mr-2"></i>Start Game
+            </button>
+            <button id="howToPlayBtn" 
+                    class="btn-hover btn-active bg-purple-600 hover:bg-purple-700 text-white font-bold py-4 px-8 rounded-full text-xl transition-all duration-300">
+                <i class="fas fa-question-circle mr-2"></i>How to Play
+            </button>
+            <button onclick="window.location.href='leaderboard.html'" 
+                    class="btn-hover btn-active bg-green-600 hover:bg-green-700 text-white font-bold py-4 px-8 rounded-full text-xl transition-all duration-300">
+                <i class="fas fa-trophy mr-2"></i>Leaderboard
+            </button>
+        </div>
+    </div>
+
+    <!-- How to Play Modal -->
+    <div id="howToPlayModal" class="fixed inset-0 bg-black bg-opacity-70 hidden items-center justify-center z-50 p-4">
+        <div class="bg-gray-800 rounded-lg max-w-md w-full p-6">
+            <div class="flex justify-between items-center mb-4">
+                <h2 class="text-2xl font-bold">How to Play</h2>
+                <button id="closeModalBtn" class="text-gray-400 hover:text-white">
+                    <i class="fas fa-times text-2xl"></i>
+                </button>
+            </div>
+            <div class="space-y-4">
+                <p><i class="fas fa-arrow-up mr-2"></i> <span class="font-semibold">Up Arrow</span> - Move Up</p>
+                <p><i class="fas fa-arrow-down mr-2"></i> <span class="font-semibold">Down Arrow</span> - Move Down</p>
+                <p><i class="fas fa-arrow-left mr-2"></i> <span class="font-semibold">Left Arrow</span> - Move Left</p>
+                <p><i class="fas fa-arrow-right mr-2"></i> <span class="font-semibold">Right Arrow</span> - Move Right</p>
+                <p><i class="fas fa-space-shuttle mr-2"></i> <span class="font-semibold">Spacebar</span> - Shoot</p>
+                <p class="mt-4 text-yellow-300">Destroy as many asteroids as you can to score points!</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Modal functionality
+        const howToPlayBtn = document.getElementById('howToPlayBtn');
+        const howToPlayModal = document.getElementById('howToPlayModal');
+        const closeModalBtn = document.getElementById('closeModalBtn');
+
+        howToPlayBtn.addEventListener('click', () => {
+            howToPlayModal.classList.remove('hidden');
+            howToPlayModal.classList.add('flex');
+        });
+
+        closeModalBtn.addEventListener('click', () => {
+            howToPlayModal.classList.add('hidden');
+            howToPlayModal.classList.remove('flex');
+        });
+
+        // Close modal when clicking outside
+        howToPlayModal.addEventListener('click', (e) => {
+            if (e.target === howToPlayModal) {
+                howToPlayModal.classList.add('hidden');
+                howToPlayModal.classList.remove('flex');
+            }
+        });
+    </script>
+</body>
+</html>
